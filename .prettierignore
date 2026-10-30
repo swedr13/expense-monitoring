@@ -1,0 +1,7 @@
+dist
+dev-dist
+coverage
+public
+package-lock.json
+supabase/.temp
+src/shared/lib/database.types.ts
