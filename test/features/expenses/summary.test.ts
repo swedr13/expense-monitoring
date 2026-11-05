@@ -49,6 +49,20 @@ describe("groupByDay", () => {
     expect(days.map((d) => d.total)).toEqual([1250, 75.5]);
   });
 
+  it("counts and totals Food, Others and uncategorised rows per day", () => {
+    const [day] = groupByDay([
+      expense({ position: 0, amount: 120, category: "food" }),
+      expense({ position: 1, amount: 80.5, category: "food" }),
+      expense({ position: 2, amount: 300, category: "others" }),
+      expense({ position: 3, amount: 50, category: null }),
+    ]);
+
+    expect(day.food).toEqual({ count: 2, total: 200.5 });
+    expect(day.others).toEqual({ count: 1, total: 300 });
+    expect(day.uncategorised).toEqual({ count: 1, total: 50 });
+    expect(day.total).toBe(550.5);
+  });
+
   it("is empty with no expenses", () => {
     expect(groupByDay([])).toEqual([]);
   });

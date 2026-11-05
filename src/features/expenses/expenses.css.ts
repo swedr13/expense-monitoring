@@ -95,8 +95,27 @@ export const totalValue = style({
 
 // --- Records tab -------------------------------------------------------------
 
+/** A panel's title: the date and total, with the Food/Others summary under it. */
+export const dayHeading = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.space.xs,
+  minWidth: 0,
+});
+
 export const dayLabel = style({
   fontWeight: 600,
+  fontVariantNumeric: "tabular-nums",
+});
+
+/** Food and Others each on their own line on phones, side by side when there's room. */
+export const daySummary = style({
+  display: "flex",
+  flexWrap: "wrap",
+  columnGap: vars.space.md,
+  rowGap: vars.space.xs,
+  color: vars.color.textSecondary,
+  fontSize: vars.font.sizeSm,
   fontVariantNumeric: "tabular-nums",
 });
 

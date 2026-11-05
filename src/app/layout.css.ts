@@ -70,8 +70,15 @@ export const brand = style({
   display: "flex",
   alignItems: "center",
   flexShrink: 0,
+  gap: vars.space.sm,
   minHeight: vars.touchTarget,
   textDecoration: "none",
+});
+
+export const brandLogo = style({
+  width: vars.iconTile,
+  height: vars.iconTile,
+  flexShrink: 0,
 });
 
 export const brandText = style({

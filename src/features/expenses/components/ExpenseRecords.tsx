@@ -3,8 +3,29 @@ import { DataState } from "@/shared/components/DataState";
 import { dayjs } from "@/shared/lib/dayjs";
 import { useExpenseRecords } from "../hooks/useExpenseRecords";
 import { categoryLabel, formatPeso } from "../summary";
-import type { Expense } from "../types";
-import { dayLabel, recordAmount, recordDetail, recordLine } from "../expenses.css";
+import type { CategoryTally, DaySummary, Expense } from "../types";
+import {
+  dayHeading,
+  dayLabel,
+  daySummary,
+  recordAmount,
+  recordDetail,
+  recordLine,
+} from "../expenses.css";
+
+const tallyText = (label: string, { count, total }: CategoryTally) =>
+  `${label}: ${count} ${count === 1 ? "expense" : "expenses"} · ${formatPeso(total)}`;
+
+/** Under the date: how the day splits between Food and Others. */
+const DaySummaryLine = ({ record }: { record: DaySummary }) => (
+  <span className={daySummary}>
+    <span>{tallyText("Food", record.food)}</span>
+    <span>{tallyText("Others", record.others)}</span>
+    {record.uncategorised.count > 0 && (
+      <span>{tallyText("Uncategorised", record.uncategorised)}</span>
+    )}
+  </span>
+);
 
 const DayExpenses = ({ expenses }: { expenses: Expense[] }) => (
   <List
@@ -25,7 +46,7 @@ const DayExpenses = ({ expenses }: { expenses: Expense[] }) => (
   />
 );
 
-/** One closed panel per day, newest first, titled with the day's total. */
+/** One closed panel per day, newest first, titled with the day's total and its Food/Others split. */
 export const ExpenseRecords = () => {
   const records = useExpenseRecords();
 
@@ -41,8 +62,11 @@ export const ExpenseRecords = () => {
         items={(records.data ?? []).map((record) => ({
           key: record.day,
           label: (
-            <span className={dayLabel}>
-              {dayjs(record.day).format("ddd, MMM D, YYYY")} · {formatPeso(record.total)}
+            <span className={dayHeading}>
+              <span className={dayLabel}>
+                {dayjs(record.day).format("ddd, MMM D, YYYY")} · {formatPeso(record.total)}
+              </span>
+              <DaySummaryLine record={record} />
             </span>
           ),
           children: <DayExpenses expenses={record.expenses} />,

@@ -7,6 +7,7 @@ import { AppNav } from "./AppNav";
 import {
   backdrop,
   brand,
+  brandLogo,
   brandText,
   content,
   header,
@@ -31,8 +32,8 @@ export const AppLayout = () => (
       </div>
     </div>
     <header className={header}>
-      {/* text brand until public/app-icon.png is replaced and the icons regenerated */}
       <Link to="/" className={brand}>
+        <img src="/pwa-64x64.png" alt="" width={64} height={64} className={brandLogo} />
         <span className={brandText}>Expense Monitoring</span>
       </Link>
       <div className={headerEnd}>

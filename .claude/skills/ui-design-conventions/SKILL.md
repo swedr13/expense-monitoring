@@ -40,8 +40,9 @@ globally — a new screen gets it by composing the pieces below:
 | Modal, drawer, card skin | nothing — `componentConfig` in `src/app/theme.ts` applies it          |
 
 - Never use a raw antd `Tag` with a `color` for status. Don't add `@ant-design/icons`.
-- The header shows a text brand ("Expense Monitoring") until `public/app-icon.png` is replaced
-  and `npm run generate-pwa-assets` has been run.
+- The header shows the wallet logo (`/pwa-64x64.png`) beside the "Expense Monitoring" text. All
+  icons come from `public/app-icon.png` via `npm run generate-pwa-assets`. There is no splash
+  screen.
 - The theme lives in `src/app/`: `palette.ts` (surfaces, tones, swatches), `theme.ts` (antd
   tokens + skin), `skin.css.ts`, `ThemePicker.tsx` (floating palette button + header sun/moon),
   `useThemePreference.ts` (mode and colour per device in `localStorage` under
@@ -57,7 +58,9 @@ globally — a new screen gets it by composing the pieces below:
 - **Expenses tab:** one `Card` holding an antd `Form` + `Form.List` of rows, the
   "Add another expense" button, and the read-only Total (an `<output>`, never an input).
 - **Records tab:** antd `Collapse`, one panel per day, **no `defaultActiveKey`** — every panel
-  starts closed. Panel title `ddd, MMM D, YYYY · ₱total`; the body is an antd `List`.
+  starts closed. Panel title `ddd, MMM D, YYYY · ₱total`, with a smaller line under it giving the count and
+  total for Food and Others (and Uncategorised, only when there are any); the body is an antd
+  `List`.
 - **Modals vs drawers:** a short confirm is `Modal.confirm` (via `App.useApp().modal`);
   a form on a phone is a `Drawer` with `placement="bottom"`; on desktop a `Modal`.
 - **Feedback:** `App.useApp()` → `message` for quick confirmations and save errors,

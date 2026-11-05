@@ -1,4 +1,4 @@
-import type { DaySummary, Expense, ExpenseCategory } from "./types";
+import type { CategoryTally, DaySummary, Expense, ExpenseCategory } from "./types";
 
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
 
@@ -12,6 +12,15 @@ export const sumAmounts = (amounts: ReadonlyArray<number | null | undefined>) =>
 export const categoryLabel = (category: ExpenseCategory | null) =>
   category === "food" ? "Food" : category === "others" ? "Others" : "—";
 
+/** Count and total of the rows in one category (`null` for uncategorised). */
+export const tallyCategory = (
+  expenses: readonly Expense[],
+  category: ExpenseCategory | null,
+): CategoryTally => {
+  const rows = expenses.filter((expense) => expense.category === category);
+  return { count: rows.length, total: sumAmounts(rows.map((row) => row.amount)) };
+};
+
 /** One entry per `spent_on` day, newest day first, each day's rows in position order. */
 export const groupByDay = (expenses: readonly Expense[]): DaySummary[] => {
   const byDay = new Map<string, Expense[]>();
@@ -23,6 +32,13 @@ export const groupByDay = (expenses: readonly Expense[]): DaySummary[] => {
     .sort(([left], [right]) => right.localeCompare(left))
     .map(([day, rows]) => {
       const sorted = [...rows].sort((left, right) => left.position - right.position);
-      return { day, expenses: sorted, total: sumAmounts(sorted.map((row) => row.amount)) };
+      return {
+        day,
+        expenses: sorted,
+        total: sumAmounts(sorted.map((row) => row.amount)),
+        food: tallyCategory(sorted, "food"),
+        others: tallyCategory(sorted, "others"),
+        uncategorised: tallyCategory(sorted, null),
+      };
     });
 };

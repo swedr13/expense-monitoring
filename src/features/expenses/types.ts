@@ -16,10 +16,17 @@ export type ExpenseDraft = {
   note: string;
 };
 
+/** How many expenses fell in one category on a day, and what they came to. */
+export type CategoryTally = { count: number; total: number };
+
 /** One Records panel. */
 export type DaySummary = {
   /** `YYYY-MM-DD`, the Manila day. */
   day: string;
   total: number;
+  food: CategoryTally;
+  others: CategoryTally;
+  /** Rows saved without Food or Others ticked. */
+  uncategorised: CategoryTally;
   expenses: Expense[];
 };

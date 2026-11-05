@@ -21,8 +21,8 @@ export default defineConfig({
         scope: "/",
         display: "standalone",
         theme_color: "#1f7a4d",
-        // Matches the in-app splash so Android's launch screen hands over seamlessly.
-        background_color: "#000000",
+        // Android's launch screen behind the icon while the app starts.
+        background_color: "#ffffff",
         icons: [
           { src: "pwa-64x64.png", sizes: "64x64", type: "image/png" },
           { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },

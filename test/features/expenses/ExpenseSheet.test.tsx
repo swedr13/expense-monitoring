@@ -173,7 +173,7 @@ describe("Records tab", () => {
     vi.mocked(expensesApi.fetchDayExpenses).mockResolvedValue([]);
   });
 
-  it("lists one closed panel per day, newest first, with the day's total", async () => {
+  it("lists one closed panel per day, newest first, with the day's total and Food/Others split", async () => {
     vi.mocked(expensesApi.fetchAllExpenses).mockResolvedValue([
       saved({ spent_on: "2026-10-29", amount: 1000, category: "food" }),
       saved({
@@ -191,8 +191,9 @@ describe("Records tab", () => {
     const first = await screen.findByRole("button", { name: /Thu, Oct 29, 2026 · ₱1,250\.00/ });
     const panels = screen.getAllByRole("button", { expanded: false });
     expect(panels.map((p) => p.textContent)).toEqual([
-      "Thu, Oct 29, 2026 · ₱1,250.00",
-      "Wed, Oct 28, 2026 · ₱75.00",
+      "Thu, Oct 29, 2026 · ₱1,250.00" + "Food: 1 expense · ₱1,000.00Others: 1 expense · ₱250.00",
+      "Wed, Oct 28, 2026 · ₱75.00" +
+        "Food: 0 expenses · ₱0.00Others: 0 expenses · ₱0.00Uncategorised: 1 expense · ₱75.00",
     ]);
     expect(screen.queryByText("Food")).not.toBeInTheDocument();
     await expectNoA11yViolations(container);
