@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryLabel, formatPeso, groupByDay, sumAmounts } from "@/features/expenses/summary";
+import { formatPeso, groupByDay, sumAmounts, sumIncluded } from "@/features/expenses/summary";
 import type { Expense } from "@/features/expenses/types";
 import { manilaDay } from "@/shared/lib/dayjs";
 
@@ -11,6 +11,7 @@ const expense = (overrides: Partial<Expense>): Expense => ({
   amount: 100,
   category: null,
   note: null,
+  included: true,
   created_at: "2026-10-30T01:00:00Z",
   updated_at: "2026-10-30T01:00:00Z",
   ...overrides,
@@ -49,18 +50,17 @@ describe("groupByDay", () => {
     expect(days.map((d) => d.total)).toEqual([1250, 75.5]);
   });
 
-  it("counts and totals Food, Others and uncategorised rows per day", () => {
+  it("leaves unticked rows out of the day's total and tallies them apart", () => {
     const [day] = groupByDay([
-      expense({ position: 0, amount: 120, category: "food" }),
-      expense({ position: 1, amount: 80.5, category: "food" }),
-      expense({ position: 2, amount: 300, category: "others" }),
-      expense({ position: 3, amount: 50, category: null }),
+      expense({ position: 0, amount: 120 }),
+      expense({ position: 1, amount: 80.5 }),
+      expense({ position: 2, amount: 300, included: false }),
+      expense({ position: 3, amount: 50, included: false }),
     ]);
 
-    expect(day.food).toEqual({ count: 2, total: 200.5 });
-    expect(day.others).toEqual({ count: 1, total: 300 });
-    expect(day.uncategorised).toEqual({ count: 1, total: 50 });
-    expect(day.total).toBe(550.5);
+    expect(day.total).toBe(200.5);
+    expect(day.excluded).toEqual({ count: 2, total: 350 });
+    expect(day.expenses).toHaveLength(4);
   });
 
   it("is empty with no expenses", () => {
@@ -80,16 +80,24 @@ describe("sumAmounts", () => {
   });
 });
 
-describe("formatPeso and categoryLabel", () => {
+describe("sumIncluded", () => {
+  it("adds only ticked rows, blanks as zero", () => {
+    expect(
+      sumIncluded([
+        { amount: 100, included: true },
+        { amount: 50, included: false },
+        { amount: null, included: true },
+        { amount: 0.1, included: true },
+        undefined,
+      ]),
+    ).toBe(100.1);
+  });
+});
+
+describe("formatPeso", () => {
   it("formats pesos with the sign, grouping and two decimals", () => {
     expect(formatPeso(1250)).toBe("₱1,250.00");
     expect(formatPeso(0)).toBe("₱0.00");
-  });
-
-  it("labels categories, with a dash for uncategorised", () => {
-    expect(categoryLabel("food")).toBe("Food");
-    expect(categoryLabel("others")).toBe("Others");
-    expect(categoryLabel(null)).toBe("—");
   });
 });
 

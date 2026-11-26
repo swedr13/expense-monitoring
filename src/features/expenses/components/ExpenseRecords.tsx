@@ -2,8 +2,8 @@ import { Collapse, List } from "antd";
 import { DataState } from "@/shared/components/DataState";
 import { dayjs } from "@/shared/lib/dayjs";
 import { useExpenseRecords } from "../hooks/useExpenseRecords";
-import { categoryLabel, formatPeso } from "../summary";
-import type { CategoryTally, DaySummary, Expense } from "../types";
+import { formatPeso } from "../summary";
+import type { DaySummary, Expense } from "../types";
 import {
   dayHeading,
   dayLabel,
@@ -13,16 +13,16 @@ import {
   recordLine,
 } from "../expenses.css";
 
-const tallyText = (label: string, { count, total }: CategoryTally) =>
-  `${label}: ${count} ${count === 1 ? "expense" : "expenses"} · ${formatPeso(total)}`;
+const expensesText = (count: number) => `${count} ${count === 1 ? "expense" : "expenses"}`;
 
-/** Under the date: how the day splits between Food and Others. */
+/** Under the date: how many expenses, and what was left out of the total. */
 const DaySummaryLine = ({ record }: { record: DaySummary }) => (
   <span className={daySummary}>
-    <span>{tallyText("Food", record.food)}</span>
-    <span>{tallyText("Others", record.others)}</span>
-    {record.uncategorised.count > 0 && (
-      <span>{tallyText("Uncategorised", record.uncategorised)}</span>
+    <span>{expensesText(record.expenses.length)}</span>
+    {record.excluded.count > 0 && (
+      <span>
+        Not in total: {expensesText(record.excluded.count)} · {formatPeso(record.excluded.total)}
+      </span>
     )}
   </span>
 );
@@ -37,8 +37,8 @@ const DayExpenses = ({ expenses }: { expenses: Expense[] }) => (
         <span className={recordLine}>
           <span className={recordAmount}>{formatPeso(expense.amount)}</span>
           <span className={recordDetail}>
-            {categoryLabel(expense.category)}
-            {expense.note && ` · ${expense.note}`}
+            {expense.note ?? "—"}
+            {!expense.included && " · not in total"}
           </span>
         </span>
       </List.Item>
@@ -46,7 +46,7 @@ const DayExpenses = ({ expenses }: { expenses: Expense[] }) => (
   />
 );
 
-/** One closed panel per day, newest first, titled with the day's total and its Food/Others split. */
+/** One closed panel per day, newest first, titled with the day's total of ticked expenses. */
 export const ExpenseRecords = () => {
   const records = useExpenseRecords();
 

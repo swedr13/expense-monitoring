@@ -1,4 +1,4 @@
-import type { CategoryTally, DaySummary, Expense, ExpenseCategory } from "./types";
+import type { DaySummary, Expense, Tally } from "./types";
 
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
 
@@ -9,17 +9,15 @@ export const formatPeso = (amount: number) => peso.format(amount);
 export const sumAmounts = (amounts: ReadonlyArray<number | null | undefined>) =>
   amounts.reduce<number>((cents, amount) => cents + Math.round((amount ?? 0) * 100), 0) / 100;
 
-export const categoryLabel = (category: ExpenseCategory | null) =>
-  category === "food" ? "Food" : category === "others" ? "Others" : "—";
+/** The total of only the rows whose checkbox is ticked. */
+export const sumIncluded = (
+  rows: ReadonlyArray<{ amount: number | null; included: boolean } | null | undefined>,
+) => sumAmounts(rows.filter((row) => row?.included).map((row) => row?.amount));
 
-/** Count and total of the rows in one category (`null` for uncategorised). */
-export const tallyCategory = (
-  expenses: readonly Expense[],
-  category: ExpenseCategory | null,
-): CategoryTally => {
-  const rows = expenses.filter((expense) => expense.category === category);
-  return { count: rows.length, total: sumAmounts(rows.map((row) => row.amount)) };
-};
+const tally = (rows: readonly Expense[]): Tally => ({
+  count: rows.length,
+  total: sumAmounts(rows.map((row) => row.amount)),
+});
 
 /** One entry per `spent_on` day, newest day first, each day's rows in position order. */
 export const groupByDay = (expenses: readonly Expense[]): DaySummary[] => {
@@ -35,10 +33,8 @@ export const groupByDay = (expenses: readonly Expense[]): DaySummary[] => {
       return {
         day,
         expenses: sorted,
-        total: sumAmounts(sorted.map((row) => row.amount)),
-        food: tallyCategory(sorted, "food"),
-        others: tallyCategory(sorted, "others"),
-        uncategorised: tallyCategory(sorted, null),
+        total: sumIncluded(sorted),
+        excluded: tally(sorted.filter((row) => !row.included)),
       };
     });
 };

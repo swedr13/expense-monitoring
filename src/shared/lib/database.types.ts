@@ -20,6 +20,7 @@ export type Database = {
           category: string | null
           created_at: string
           id: string
+          included: boolean
           note: string | null
           position: number
           spent_on: string
@@ -31,6 +32,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           id?: string
+          included?: boolean
           note?: string | null
           position: number
           spent_on: string
@@ -42,6 +44,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           id?: string
+          included?: boolean
           note?: string | null
           position?: number
           spent_on?: string

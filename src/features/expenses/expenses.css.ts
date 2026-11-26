@@ -30,40 +30,53 @@ export const rowNumber = style({
   fontVariantNumeric: "tabular-nums",
 });
 
-export const rowFields = style({
-  display: "flex",
-  flexDirection: "column",
-  gap: vars.space.sm,
-  minWidth: 0,
-});
-
-/** Amount and categories share a line when there's room, and wrap on narrow phones. */
+/** Checkbox, amount and note share a line when there's room; the note wraps under on narrow phones. */
 export const rowMain = style({
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
-  columnGap: vars.space.md,
+  columnGap: vars.space.sm,
   rowGap: vars.space.xs,
+  minWidth: 0,
+});
+
+/** The whole checkbox is the tap target, at least 44px each way. */
+export const includeToggle = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minWidth: vars.touchTarget,
+  minHeight: vars.touchTarget,
+  marginInlineEnd: 0,
 });
 
 export const amountInput = style({
-  flex: "1 1 10rem",
+  flex: "1 1 7rem",
   minWidth: 0,
   width: "auto",
 });
 
-export const categories = style({
-  display: "flex",
-  alignItems: "center",
-  gap: vars.space.md,
+export const noteInput = style({
+  flex: "2 1 12rem",
+  minWidth: 0,
 });
 
-/** The whole label is the tap target, at least 44px tall. */
-export const categoryOption = style({
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: vars.touchTarget,
-  marginInlineEnd: 0,
+/** Above the rows: says what each box is for, and what the checkbox does. */
+export const sheetHint = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.space.xs,
+  marginBottom: vars.space.sm,
+  padding: vars.space.md,
+  borderRadius: vars.radius,
+  background: `color-mix(in srgb, ${vars.color.primary} 8%, transparent)`,
+  color: vars.color.textSecondary,
+  fontSize: vars.font.sizeSm,
+});
+
+export const sheetHintStrong = style({
+  color: vars.color.textHeading,
+  fontWeight: 600,
 });
 
 export const addButton = style({

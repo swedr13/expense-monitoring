@@ -1,6 +1,6 @@
 import type { Database } from "@/shared/lib/database.types";
 
-/** `null` is uncategorised. Mirrors the `category` check constraint. */
+/** Rows saved before notes replaced Food/Others may still carry one; new rows leave it null. */
 export type ExpenseCategory = "food" | "others";
 
 // Read from Database directly: the generated Tables<> helper defaults to `public`,
@@ -12,21 +12,21 @@ export type Expense = Omit<ExpenseRow, "category"> & { category: ExpenseCategory
 /** What one row on the Expenses tab holds while it's being typed. */
 export type ExpenseDraft = {
   amount: number | null;
-  category: ExpenseCategory | null;
   note: string;
+  /** Ticked rows count toward the total. */
+  included: boolean;
 };
 
-/** How many expenses fell in one category on a day, and what they came to. */
-export type CategoryTally = { count: number; total: number };
+/** How many expenses there were and what they came to. */
+export type Tally = { count: number; total: number };
 
 /** One Records panel. */
 export type DaySummary = {
   /** `YYYY-MM-DD`, the Manila day. */
   day: string;
+  /** What the ticked rows came to. */
   total: number;
-  food: CategoryTally;
-  others: CategoryTally;
-  /** Rows saved without Food or Others ticked. */
-  uncategorised: CategoryTally;
+  /** Rows saved with their checkbox unticked. */
+  excluded: Tally;
   expenses: Expense[];
 };

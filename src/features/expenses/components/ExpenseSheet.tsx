@@ -6,16 +6,16 @@ import { PanelTitle } from "@/shared/components/PanelTitle";
 import { dayjs } from "@/shared/lib/dayjs";
 import { useExpenseMutations } from "../hooks/useExpenseMutations";
 import { useTodayExpenses } from "../hooks/useTodayExpenses";
-import { sumAmounts } from "../summary";
+import { sumIncluded } from "../summary";
 import type { Expense, ExpenseDraft } from "../types";
-import { addButton, rowList } from "../expenses.css";
+import { addButton, rowList, sheetHint, sheetHintStrong } from "../expenses.css";
 import { ExpenseRow } from "./ExpenseRow";
 import { ExpenseTotal } from "./ExpenseTotal";
 
 /** The sheet always offers at least this many rows. */
 const minRows = 10;
 
-const blankRow = (): ExpenseDraft => ({ amount: null, category: null, note: "" });
+const blankRow = (): ExpenseDraft => ({ amount: null, note: "", included: true });
 
 type SheetValues = { rows: ExpenseDraft[] };
 
@@ -26,7 +26,7 @@ const toRows = (saved: readonly Expense[]): ExpenseDraft[] => {
   return Array.from({ length }, (_, position) => {
     const expense = byPosition.get(position);
     return expense
-      ? { amount: expense.amount, category: expense.category, note: expense.note ?? "" }
+      ? { amount: expense.amount, note: expense.note ?? "", included: expense.included }
       : blankRow();
   });
 };
@@ -51,7 +51,19 @@ const DaySheet = ({ day, saved }: DaySheetProps) => {
         </PanelTitle>
       }
     >
-      <Form form={form} initialValues={initialValues} aria-label="Today's expenses">
+      <p className={sheetHint} id="expense-sheet-hint">
+        <span>
+          Type the <strong className={sheetHintStrong}>₱ Amount</strong>, then{" "}
+          <strong className={sheetHintStrong}>what it was for</strong> beside it.
+        </span>
+        <span>Untick the box before an amount to leave it out of the total.</span>
+      </p>
+      <Form
+        form={form}
+        initialValues={initialValues}
+        aria-label="Today's expenses"
+        aria-describedby="expense-sheet-hint"
+      >
         <Form.List name="rows">
           {(fields, { add }) => (
             <>
@@ -77,7 +89,7 @@ const DaySheet = ({ day, saved }: DaySheetProps) => {
           )}
         </Form.List>
       </Form>
-      <ExpenseTotal total={sumAmounts(rows.map((r) => r?.amount))} />
+      <ExpenseTotal total={sumIncluded(rows)} />
     </Card>
   );
 };

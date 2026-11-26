@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as expensesApi from "@/features/expenses/api";
@@ -26,6 +26,7 @@ const saved = (overrides: Partial<Expense>): Expense => ({
   amount: 12.5,
   category: null,
   note: null,
+  included: true,
   created_at: "2026-10-30T01:00:00Z",
   updated_at: "2026-10-30T01:00:00Z",
   ...overrides,
@@ -33,9 +34,10 @@ const saved = (overrides: Partial<Expense>): Expense => ({
 
 const amountBox = (row: number) =>
   screen.getByRole("spinbutton", { name: `Expense ${row} amount` });
-const row = (n: number) => screen.getByRole("group", { name: `Expense ${n}` });
 const noteBox = (n: number) =>
-  screen.queryByRole("textbox", { name: `Expense ${n}: what was it?` });
+  screen.getByRole("textbox", { name: `Expense ${n}: what was it for?` });
+const includeBox = (n: number) =>
+  screen.getByRole("checkbox", { name: `Count expense ${n} in the total` });
 const total = () => screen.getByRole("status", { name: "Total" });
 
 describe("Expenses tab", () => {
@@ -51,14 +53,15 @@ describe("Expenses tab", () => {
     vi.mocked(expensesApi.fetchAllExpenses).mockResolvedValue([]);
   });
 
-  it("starts with 10 empty, uncategorised rows and a zero total", async () => {
+  it("starts with 10 empty rows, each ticked and with a note box, and a zero total", async () => {
     const { container } = renderRoute("/");
 
     await screen.findByRole("spinbutton", { name: "Expense 1 amount" });
     expect(screen.getAllByRole("spinbutton")).toHaveLength(10);
     expect(amountBox(1)).toHaveAttribute("inputmode", "decimal");
-    expect(screen.getAllByRole("checkbox")).toHaveLength(20);
-    expect(screen.queryAllByRole("checkbox", { checked: true })).toHaveLength(0);
+    expect(screen.getAllByRole("textbox", { name: /what was it for/ })).toHaveLength(10);
+    expect(screen.getAllByRole("checkbox", { checked: true })).toHaveLength(10);
+    expect(screen.queryByRole("checkbox", { name: /Food|Others/ })).not.toBeInTheDocument();
     expect(total()).toHaveTextContent("₱0.00");
     expect(expensesApi.fetchDayExpenses).toHaveBeenCalledWith(manilaDay());
     await expectNoA11yViolations(container);
@@ -73,6 +76,7 @@ describe("Expenses tab", () => {
 
     expect(screen.getAllByRole("spinbutton")).toHaveLength(11);
     expect(amountBox(11)).toHaveValue("");
+    expect(includeBox(11)).toBeChecked();
   });
 
   it("totals what's typed in a read-only label", async () => {
@@ -88,32 +92,27 @@ describe("Expenses tab", () => {
     expect(screen.queryByRole("spinbutton", { name: /total/i })).not.toBeInTheDocument();
   });
 
-  it("picks one category at a time and asks for a note only with Others", async () => {
-    vi.mocked(expensesApi.updateExpense).mockResolvedValue(saved({}));
+  it("leaves unticked amounts out of the total", async () => {
     renderRoute("/");
     await screen.findByRole("spinbutton", { name: "Expense 1 amount" });
-    const food = within(row(1)).getByRole("checkbox", { name: "Food" });
-    const others = within(row(1)).getByRole("checkbox", { name: "Others" });
 
-    expect(noteBox(1)).not.toBeInTheDocument();
-    await userEvent.click(others);
-    expect(others).toBeChecked();
-    expect(noteBox(1)).toBeInTheDocument();
-    expect(noteBox(2)).not.toBeInTheDocument();
+    await userEvent.type(amountBox(1), "1000");
+    await userEvent.type(amountBox(2), "250");
+    await waitFor(() => expect(total()).toHaveTextContent("₱1,250.00"));
 
-    await userEvent.click(food);
-    expect(food).toBeChecked();
-    expect(others).not.toBeChecked();
-    expect(noteBox(1)).not.toBeInTheDocument();
+    await userEvent.click(includeBox(2));
+    expect(includeBox(2)).not.toBeChecked();
+    await waitFor(() => expect(total()).toHaveTextContent("₱1,000.00"));
 
-    await userEvent.click(food);
-    expect(food).not.toBeChecked();
-    expect(others).not.toBeChecked();
+    await userEvent.click(includeBox(2));
+    await waitFor(() => expect(total()).toHaveTextContent("₱1,250.00"));
   });
 
-  it("saves a new amount on leaving the box, then updates and deletes that row", async () => {
+  it("saves a new amount on leaving the box, then its note, its checkbox and its deletion", async () => {
     vi.mocked(expensesApi.createExpense).mockResolvedValue(saved({}));
-    vi.mocked(expensesApi.updateExpense).mockResolvedValue(saved({ category: "others" }));
+    vi.mocked(expensesApi.updateExpense)
+      .mockResolvedValueOnce(saved({ note: "Lunch" }))
+      .mockResolvedValueOnce(saved({ note: "Lunch", included: false }));
     vi.mocked(expensesApi.deleteExpense).mockResolvedValue();
     renderRoute("/");
     await screen.findByRole("spinbutton", { name: "Expense 1 amount" });
@@ -125,17 +124,27 @@ describe("Expenses tab", () => {
         spentOn: manilaDay(),
         position: 0,
         amount: 12.5,
-        category: null,
         note: null,
+        included: true,
       }),
     );
 
-    await userEvent.click(within(row(1)).getByRole("checkbox", { name: "Others" }));
+    await userEvent.type(noteBox(1), "  Lunch ");
+    await userEvent.tab();
     await waitFor(() =>
       expect(expensesApi.updateExpense).toHaveBeenCalledWith("expense-1", {
         amount: 12.5,
-        category: "others",
-        note: null,
+        note: "Lunch",
+        included: true,
+      }),
+    );
+
+    await userEvent.click(includeBox(1));
+    await waitFor(() =>
+      expect(expensesApi.updateExpense).toHaveBeenLastCalledWith("expense-1", {
+        amount: 12.5,
+        note: "Lunch",
+        included: false,
       }),
     );
 
@@ -147,17 +156,19 @@ describe("Expenses tab", () => {
 
   it("shows today's saved rows in place", async () => {
     vi.mocked(expensesApi.fetchDayExpenses).mockResolvedValue([
-      saved({ position: 0, amount: 1000, category: "food" }),
-      saved({ id: "expense-2", position: 11, amount: 250, category: "others", note: "Load" }),
+      saved({ position: 0, amount: 1000, note: "Groceries" }),
+      saved({ id: "expense-2", position: 11, amount: 250, note: "Load", included: false }),
     ]);
     renderRoute("/");
 
     await screen.findByRole("spinbutton", { name: "Expense 12 amount" });
     expect(screen.getAllByRole("spinbutton")).toHaveLength(12);
     expect(amountBox(1)).toHaveValue("1000.00");
-    expect(within(row(1)).getByRole("checkbox", { name: "Food" })).toBeChecked();
+    expect(noteBox(1)).toHaveValue("Groceries");
     expect(noteBox(12)).toHaveValue("Load");
-    expect(total()).toHaveTextContent("₱1,250.00");
+    expect(includeBox(1)).toBeChecked();
+    expect(includeBox(12)).not.toBeChecked();
+    expect(total()).toHaveTextContent("₱1,000.00");
   });
 });
 
@@ -173,36 +184,34 @@ describe("Records tab", () => {
     vi.mocked(expensesApi.fetchDayExpenses).mockResolvedValue([]);
   });
 
-  it("lists one closed panel per day, newest first, with the day's total and Food/Others split", async () => {
+  it("lists one closed panel per day, newest first, with the total of ticked expenses", async () => {
     vi.mocked(expensesApi.fetchAllExpenses).mockResolvedValue([
-      saved({ spent_on: "2026-10-29", amount: 1000, category: "food" }),
+      saved({ spent_on: "2026-10-29", amount: 1000, note: "Groceries" }),
       saved({
         id: "e2",
         spent_on: "2026-10-29",
         position: 1,
         amount: 250,
-        category: "others",
         note: "Load",
+        included: false,
       }),
       saved({ id: "e3", spent_on: "2026-10-28", amount: 75 }),
     ]);
     const { container } = renderRoute("/?tab=records");
 
-    const first = await screen.findByRole("button", { name: /Thu, Oct 29, 2026 · ₱1,250\.00/ });
+    const first = await screen.findByRole("button", { name: /Thu, Oct 29, 2026 · ₱1,000\.00/ });
     const panels = screen.getAllByRole("button", { expanded: false });
     expect(panels.map((p) => p.textContent)).toEqual([
-      "Thu, Oct 29, 2026 · ₱1,250.00" + "Food: 1 expense · ₱1,000.00Others: 1 expense · ₱250.00",
-      "Wed, Oct 28, 2026 · ₱75.00" +
-        "Food: 0 expenses · ₱0.00Others: 0 expenses · ₱0.00Uncategorised: 1 expense · ₱75.00",
+      "Thu, Oct 29, 2026 · ₱1,000.00" + "2 expenses" + "Not in total: 1 expense · ₱250.00",
+      "Wed, Oct 28, 2026 · ₱75.00" + "1 expense",
     ]);
-    expect(screen.queryByText("Food")).not.toBeInTheDocument();
     await expectNoA11yViolations(container);
 
     await userEvent.click(first);
     expect(first).toHaveAttribute("aria-expanded", "true");
     expect(await screen.findByText("₱1,000.00")).toBeInTheDocument();
-    expect(screen.getByText("Food")).toBeInTheDocument();
-    expect(screen.getByText("Others · Load")).toBeInTheDocument();
+    expect(screen.getByText("Groceries")).toBeInTheDocument();
+    expect(screen.getByText("Load · not in total")).toBeInTheDocument();
   });
 
   it("says so when there are no records yet", async () => {
