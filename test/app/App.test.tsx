@@ -12,6 +12,11 @@ vi.mock("@/features/expenses/api", async (importOriginal) => ({
   fetchDayExpenses: vi.fn(),
   fetchAllExpenses: vi.fn(),
 }));
+vi.mock("@/features/health/api", () => ({
+  fetchDayHealth: vi.fn().mockResolvedValue(null),
+  fetchAllHealth: vi.fn().mockResolvedValue([]),
+  saveHealth: vi.fn(),
+}));
 
 describe("app shell", () => {
   beforeEach(() => {

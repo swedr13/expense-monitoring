@@ -1,4 +1,4 @@
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 import { vars } from "@/shared/styles/vars.css";
 
 // --- Expenses tab ------------------------------------------------------------
@@ -61,21 +61,11 @@ export const noteInput = style({
   minWidth: 0,
 });
 
-/** Above the rows: says what each box is for, and what the checkbox does. */
-export const sheetHint = style({
-  display: "flex",
-  flexDirection: "column",
-  gap: vars.space.xs,
+/** Above the rows: today's date. */
+export const sheetDate = style({
+  margin: 0,
   marginBottom: vars.space.sm,
-  padding: vars.space.md,
-  borderRadius: vars.radius,
-  background: `color-mix(in srgb, ${vars.color.primary} 8%, transparent)`,
   color: vars.color.textSecondary,
-  fontSize: vars.font.sizeSm,
-});
-
-export const sheetHintStrong = style({
-  color: vars.color.textHeading,
   fontWeight: 600,
 });
 
@@ -105,19 +95,6 @@ export const totalAmount = style({
   alignItems: "center",
   gap: vars.space.xs,
   fontSize: vars.font.sizeXl,
-});
-
-const spendCheckBase = style({
-  display: "inline-flex",
-  flexShrink: 0,
-  verticalAlign: "-0.125em",
-});
-
-/** Green under ₱500, yellow up to ₱1,000, red over — the tones brighten in dark mode. */
-export const spendCheck = styleVariants({
-  low: [spendCheckBase, { color: vars.color.toneSuccess }],
-  mid: [spendCheckBase, { color: vars.color.toneWarning }],
-  high: [spendCheckBase, { color: vars.color.toneDanger }],
 });
 
 export const totalValue = style({
@@ -173,4 +150,33 @@ export const recordDetail = style({
   color: vars.color.textSecondary,
   textAlign: "end",
   overflowWrap: "anywhere",
+});
+
+/** "Expense · ₱1,000.00 ✓" and "Health · 3 of 5 done ✓" in a panel title. */
+export const categoryLine = style({
+  display: "inline-flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  columnGap: vars.space.xs,
+  fontVariantNumeric: "tabular-nums",
+});
+
+export const categoryName = style({
+  margin: 0,
+  color: vars.color.textHeading,
+  fontSize: vars.font.size,
+  fontWeight: 600,
+});
+
+/** Expense, then Health, inside an opened panel. */
+export const recordSection = style({
+  selectors: {
+    "& + &": { marginTop: vars.space.md },
+  },
+});
+
+export const recordEmpty = style({
+  margin: 0,
+  paddingBlock: vars.space.sm,
+  color: vars.color.textSecondary,
 });

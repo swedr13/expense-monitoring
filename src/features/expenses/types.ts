@@ -1,3 +1,4 @@
+import type { HealthDay } from "@/features/health/types";
 import type { Database } from "@/shared/lib/database.types";
 
 /** Rows saved before notes replaced Food/Others may still carry one; new rows leave it null. */
@@ -29,4 +30,12 @@ export type DaySummary = {
   /** Rows saved with their checkbox unticked. */
   excluded: Tally;
   expenses: Expense[];
+};
+
+/** One Records panel: a day's expenses and its Health checklist, either of which may be missing. */
+export type DayRecord = {
+  /** `YYYY-MM-DD`, the Manila day. */
+  day: string;
+  expense: DaySummary | null;
+  health: HealthDay | null;
 };

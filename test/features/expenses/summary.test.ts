@@ -102,11 +102,11 @@ describe("sumIncluded", () => {
 
 describe("spendLevel", () => {
   it("is green under ₱500, yellow from ₱500 to ₱1,000, red over ₱1,000", () => {
-    expect(spendLevel(0)).toBe("low");
-    expect(spendLevel(499.99)).toBe("low");
-    expect(spendLevel(500)).toBe("mid");
-    expect(spendLevel(1000)).toBe("mid");
-    expect(spendLevel(1000.01)).toBe("high");
+    expect(spendLevel(0)).toBe("good");
+    expect(spendLevel(499.99)).toBe("good");
+    expect(spendLevel(500)).toBe("fair");
+    expect(spendLevel(1000)).toBe("fair");
+    expect(spendLevel(1000.01)).toBe("poor");
   });
 });
 

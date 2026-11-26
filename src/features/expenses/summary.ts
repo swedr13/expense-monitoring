@@ -1,4 +1,6 @@
-import type { DaySummary, Expense, Tally } from "./types";
+import type { Level } from "@/shared/components/LevelCheck";
+import type { HealthDay } from "@/features/health/types";
+import type { DayRecord, DaySummary, Expense, Tally } from "./types";
 
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
 
@@ -39,14 +41,28 @@ export const groupByDay = (expenses: readonly Expense[]): DaySummary[] => {
     });
 };
 
-/** How a day's spending reads: under ₱500 is low, ₱500 to ₱1,000 is mid, over ₱1,000 is high. */
-export type SpendLevel = "low" | "mid" | "high";
+/** How a day's spending reads: under ₱500 is good, ₱500 to ₱1,000 is fair, over ₱1,000 is poor. */
+export const spendLevel = (total: number): Level =>
+  total < 500 ? "good" : total <= 1000 ? "fair" : "poor";
 
-export const spendLevel = (total: number): SpendLevel =>
-  total < 500 ? "low" : total <= 1000 ? "mid" : "high";
+export const spendLevelLabel: Record<Level, string> = {
+  good: "Under ₱500",
+  fair: "₱500 to ₱1,000",
+  poor: "Over ₱1,000",
+};
 
-export const spendLevelLabel: Record<SpendLevel, string> = {
-  low: "Under ₱500",
-  mid: "₱500 to ₱1,000",
-  high: "Over ₱1,000",
+/** Every day with expenses or a Health checklist, newest first. */
+export const combineDays = (
+  expenseDays: readonly DaySummary[],
+  healthDays: readonly HealthDay[],
+): DayRecord[] => {
+  const expenseByDay = new Map(expenseDays.map((summary) => [summary.day, summary]));
+  const healthByDay = new Map(healthDays.map((health) => [health.checked_on, health]));
+  return [...new Set([...expenseByDay.keys(), ...healthByDay.keys()])]
+    .sort((left, right) => right.localeCompare(left))
+    .map((day) => ({
+      day,
+      expense: expenseByDay.get(day) ?? null,
+      health: healthByDay.get(day) ?? null,
+    }));
 };

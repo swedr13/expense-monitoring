@@ -3,8 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as expensesApi from "@/features/expenses/api";
 import type { Expense } from "@/features/expenses/types";
+import * as healthApi from "@/features/health/api";
+import type { HealthDay } from "@/features/health/types";
 import { useAuth } from "@/features/identity/hooks/useAuth";
-import { manilaDay } from "@/shared/lib/dayjs";
+import { dayjs, manilaDay } from "@/shared/lib/dayjs";
 import { expectNoA11yViolations } from "../../a11y";
 import { renderRoute } from "../../renderRoute";
 
@@ -17,6 +19,30 @@ vi.mock("@/features/expenses/api", async (importOriginal) => ({
   updateExpense: vi.fn(),
   deleteExpense: vi.fn(),
 }));
+vi.mock("@/features/health/api", () => ({
+  fetchDayHealth: vi.fn(),
+  fetchAllHealth: vi.fn(),
+  saveHealth: vi.fn(),
+}));
+
+const healthDay = (overrides: Partial<HealthDay>): HealthDay => ({
+  id: crypto.randomUUID(),
+  user_id: "device-1",
+  checked_on: manilaDay(),
+  worked_out: false,
+  eat_less: false,
+  drink_water: false,
+  no_fast_food: false,
+  no_liquid_calories: false,
+  created_at: "2026-10-30T01:00:00Z",
+  updated_at: "2026-10-30T01:00:00Z",
+  ...overrides,
+});
+
+beforeEach(() => {
+  vi.mocked(healthApi.fetchDayHealth).mockResolvedValue(null);
+  vi.mocked(healthApi.fetchAllHealth).mockResolvedValue([]);
+});
 
 const saved = (overrides: Partial<Expense>): Expense => ({
   id: "expense-1",
@@ -63,7 +89,10 @@ describe("Expenses tab", () => {
     expect(screen.getAllByRole("checkbox", { checked: true })).toHaveLength(10);
     expect(screen.queryByRole("checkbox", { name: /Food|Others/ })).not.toBeInTheDocument();
     expect(total()).toHaveTextContent("₱0.00");
-    expect(screen.getByRole("img", { name: "Under ₱500" })).toBeInTheDocument();
+    // one beside the Expense title, one beside the Total
+    expect(screen.getAllByRole("img", { name: "Under ₱500" })).toHaveLength(2);
+    expect(screen.getByText(dayjs(manilaDay()).format("dddd, MMMM D, YYYY"))).toBeInTheDocument();
+    expect(screen.queryByText(/Type the/)).not.toBeInTheDocument();
     expect(expensesApi.fetchDayExpenses).toHaveBeenCalledWith(manilaDay());
     await expectNoA11yViolations(container);
   });
@@ -87,7 +116,8 @@ describe("Expenses tab", () => {
     await userEvent.type(amountBox(1), "1000");
     await userEvent.type(amountBox(2), "250");
     await waitFor(() => expect(total()).toHaveTextContent("₱1,250.00"));
-    expect(screen.getByRole("img", { name: "Over ₱1,000" })).toBeInTheDocument();
+    // one beside the Expense title, one beside the Total
+    expect(screen.getAllByRole("img", { name: "Over ₱1,000" })).toHaveLength(2);
 
     expect(total().tagName).toBe("OUTPUT");
     expect(screen.queryByRole("textbox", { name: /total/i })).not.toBeInTheDocument();
@@ -105,7 +135,8 @@ describe("Expenses tab", () => {
     await userEvent.click(includeBox(2));
     expect(includeBox(2)).not.toBeChecked();
     await waitFor(() => expect(total()).toHaveTextContent("₱1,000.00"));
-    expect(screen.getByRole("img", { name: "₱500 to ₱1,000" })).toBeInTheDocument();
+    // one beside the Expense title, one beside the Total
+    expect(screen.getAllByRole("img", { name: "₱500 to ₱1,000" })).toHaveLength(2);
 
     await userEvent.click(includeBox(2));
     await waitFor(() => expect(total()).toHaveTextContent("₱1,250.00"));
@@ -187,7 +218,7 @@ describe("Records tab", () => {
     vi.mocked(expensesApi.fetchDayExpenses).mockResolvedValue([]);
   });
 
-  it("lists one closed panel per day, newest first, with the total of ticked expenses", async () => {
+  it("lists one closed panel per day with its Expense total and Health score", async () => {
     vi.mocked(expensesApi.fetchAllExpenses).mockResolvedValue([
       saved({ spent_on: "2026-10-29", amount: 1000, note: "Groceries" }),
       saved({
@@ -200,24 +231,49 @@ describe("Records tab", () => {
       }),
       saved({ id: "e3", spent_on: "2026-10-28", amount: 75 }),
     ]);
+    vi.mocked(healthApi.fetchAllHealth).mockResolvedValue([
+      healthDay({
+        checked_on: "2026-10-30",
+        worked_out: true,
+        eat_less: true,
+        drink_water: true,
+        no_fast_food: true,
+        no_liquid_calories: true,
+      }),
+      healthDay({
+        checked_on: "2026-10-29",
+        worked_out: true,
+        drink_water: true,
+        no_fast_food: true,
+      }),
+    ]);
     const { container } = renderRoute("/?tab=records");
 
-    const first = await screen.findByRole("button", {
-      name: /Thu, Oct 29, 2026 · ₱1,000\.00 ₱500 to ₱1,000/,
-    });
+    const second = await screen.findByRole("button", { name: /Thu, Oct 29, 2026/ });
     const panels = screen.getAllByRole("button", { expanded: false });
     expect(panels.map((p) => p.textContent)).toEqual([
-      "Thu, Oct 29, 2026 · ₱1,000.00 " + "2 expenses" + "Not in total: 1 expense · ₱250.00",
-      "Wed, Oct 28, 2026 · ₱75.00 " + "1 expense",
+      "Fri, Oct 30, 2026" + "Expense· none" + "Health· 5 of 5 done",
+      "Thu, Oct 29, 2026" +
+        "Expense· ₱1,000.00" +
+        "2 expensesNot in total: 1 expense · ₱250.00" + // on the Expense line, after its check
+        "Health· 3 of 5 done",
+      "Wed, Oct 28, 2026" + "Expense· ₱75.00" + "1 expense" + "Health· not recorded",
     ]);
+    // Oct 29: ₱1,000 is yellow and 3 of 5 is yellow; Oct 28: ₱75 is green; Oct 30: 5 of 5 is green
+    expect(screen.getByRole("img", { name: "₱500 to ₱1,000" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "3 of 5 done" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Under ₱500" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "5 of 5 done" })).toBeInTheDocument();
     await expectNoA11yViolations(container);
 
-    await userEvent.click(first);
-    expect(first).toHaveAttribute("aria-expanded", "true");
+    await userEvent.click(second);
+    expect(second).toHaveAttribute("aria-expanded", "true");
     expect(await screen.findByText("₱1,000.00")).toBeInTheDocument();
     expect(screen.getByText("Groceries")).toBeInTheDocument();
     expect(screen.getByText("Load · not in total")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Health" })).toBeInTheDocument();
+    expect(screen.getAllByText("Done")).toHaveLength(3);
+    expect(screen.getAllByText("Not done")).toHaveLength(2);
   });
 
   it("says so when there are no records yet", async () => {

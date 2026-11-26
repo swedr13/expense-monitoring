@@ -53,6 +53,45 @@ export type Database = {
         }
         Relationships: []
       }
+      health_checks: {
+        Row: {
+          checked_on: string
+          created_at: string
+          drink_water: boolean
+          eat_less: boolean
+          id: string
+          no_fast_food: boolean
+          no_liquid_calories: boolean
+          updated_at: string
+          user_id: string
+          worked_out: boolean
+        }
+        Insert: {
+          checked_on: string
+          created_at?: string
+          drink_water?: boolean
+          eat_less?: boolean
+          id?: string
+          no_fast_food?: boolean
+          no_liquid_calories?: boolean
+          updated_at?: string
+          user_id?: string
+          worked_out?: boolean
+        }
+        Update: {
+          checked_on?: string
+          created_at?: string
+          drink_water?: boolean
+          eat_less?: boolean
+          id?: string
+          no_fast_food?: boolean
+          no_liquid_calories?: boolean
+          updated_at?: string
+          user_id?: string
+          worked_out?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -2,13 +2,23 @@ import { Tabs } from "antd";
 import { useSearchParams } from "react-router";
 import { ExpenseRecords } from "@/features/expenses/components/ExpenseRecords";
 import { ExpenseSheet } from "@/features/expenses/components/ExpenseSheet";
+import { HealthChecklist } from "@/features/health/components/HealthChecklist";
 import { PageTitle } from "@/shared/components/PageTitle";
 
 export const HomePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabs = [
-    { key: "expenses", label: "Expenses", children: <ExpenseSheet /> },
+    {
+      key: "expenses",
+      label: "Expenses",
+      children: (
+        <>
+          <ExpenseSheet />
+          <HealthChecklist />
+        </>
+      ),
+    },
     { key: "records", label: "Records", children: <ExpenseRecords /> },
   ];
   const requested = searchParams.get("tab") ?? "expenses";

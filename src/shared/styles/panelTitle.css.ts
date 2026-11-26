@@ -27,3 +27,9 @@ export const panelTitleText = style({
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
 });
+
+/** A status mark (like a `LevelCheck`) right after the title text. */
+export const panelTitleCheck = style({
+  display: "inline-flex",
+  flex: "none",
+});
