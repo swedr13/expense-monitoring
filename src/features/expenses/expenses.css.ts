@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { style, styleVariants } from "@vanilla-extract/css";
 import { vars } from "@/shared/styles/vars.css";
 
 // --- Expenses tab ------------------------------------------------------------
@@ -97,6 +97,27 @@ export const totalBar = style({
 export const totalLabel = style({
   color: vars.color.textSecondary,
   fontWeight: 600,
+});
+
+/** The total and its check, side by side. */
+export const totalAmount = style({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: vars.space.xs,
+  fontSize: vars.font.sizeXl,
+});
+
+const spendCheckBase = style({
+  display: "inline-flex",
+  flexShrink: 0,
+  verticalAlign: "-0.125em",
+});
+
+/** Green under ₱500, yellow up to ₱1,000, red over — the tones brighten in dark mode. */
+export const spendCheck = styleVariants({
+  low: [spendCheckBase, { color: vars.color.toneSuccess }],
+  mid: [spendCheckBase, { color: vars.color.toneWarning }],
+  high: [spendCheckBase, { color: vars.color.toneDanger }],
 });
 
 export const totalValue = style({

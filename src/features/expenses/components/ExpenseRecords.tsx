@@ -4,6 +4,7 @@ import { dayjs } from "@/shared/lib/dayjs";
 import { useExpenseRecords } from "../hooks/useExpenseRecords";
 import { formatPeso } from "../summary";
 import type { DaySummary, Expense } from "../types";
+import { SpendCheck } from "./SpendCheck";
 import {
   dayHeading,
   dayLabel,
@@ -64,7 +65,8 @@ export const ExpenseRecords = () => {
           label: (
             <span className={dayHeading}>
               <span className={dayLabel}>
-                {dayjs(record.day).format("ddd, MMM D, YYYY")} · {formatPeso(record.total)}
+                {dayjs(record.day).format("ddd, MMM D, YYYY")} · {formatPeso(record.total)}{" "}
+                <SpendCheck total={record.total} />
               </span>
               <DaySummaryLine record={record} />
             </span>

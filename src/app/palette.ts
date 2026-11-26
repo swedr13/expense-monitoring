@@ -49,8 +49,8 @@ export const palette = {
   },
 } as const;
 
-/** Status colours for tags and icons. */
+/** Status colours for tags and icons. Warning is a true yellow so it never reads as danger. */
 export const tones = {
-  light: { success: "#15803d", danger: "#c42f2a", warning: "#b45309", neutral: "#7a82ab" },
-  dark: { success: "#4ade80", danger: "#f87171", warning: "#fbbf24", neutral: "#8c94c4" },
+  light: { success: "#15803d", danger: "#c42f2a", warning: "#eab308", neutral: "#7a82ab" },
+  dark: { success: "#4ade80", danger: "#f87171", warning: "#facc15", neutral: "#8c94c4" },
 } as const;

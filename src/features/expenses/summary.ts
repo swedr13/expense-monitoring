@@ -38,3 +38,15 @@ export const groupByDay = (expenses: readonly Expense[]): DaySummary[] => {
       };
     });
 };
+
+/** How a day's spending reads: under ₱500 is low, ₱500 to ₱1,000 is mid, over ₱1,000 is high. */
+export type SpendLevel = "low" | "mid" | "high";
+
+export const spendLevel = (total: number): SpendLevel =>
+  total < 500 ? "low" : total <= 1000 ? "mid" : "high";
+
+export const spendLevelLabel: Record<SpendLevel, string> = {
+  low: "Under ₱500",
+  mid: "₱500 to ₱1,000",
+  high: "Over ₱1,000",
+};

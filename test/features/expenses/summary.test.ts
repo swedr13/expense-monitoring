@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatPeso, groupByDay, sumAmounts, sumIncluded } from "@/features/expenses/summary";
+import {
+  formatPeso,
+  groupByDay,
+  spendLevel,
+  sumAmounts,
+  sumIncluded,
+} from "@/features/expenses/summary";
 import type { Expense } from "@/features/expenses/types";
 import { manilaDay } from "@/shared/lib/dayjs";
 
@@ -91,6 +97,16 @@ describe("sumIncluded", () => {
         undefined,
       ]),
     ).toBe(100.1);
+  });
+});
+
+describe("spendLevel", () => {
+  it("is green under ₱500, yellow from ₱500 to ₱1,000, red over ₱1,000", () => {
+    expect(spendLevel(0)).toBe("low");
+    expect(spendLevel(499.99)).toBe("low");
+    expect(spendLevel(500)).toBe("mid");
+    expect(spendLevel(1000)).toBe("mid");
+    expect(spendLevel(1000.01)).toBe("high");
   });
 });
 

@@ -63,6 +63,7 @@ describe("Expenses tab", () => {
     expect(screen.getAllByRole("checkbox", { checked: true })).toHaveLength(10);
     expect(screen.queryByRole("checkbox", { name: /Food|Others/ })).not.toBeInTheDocument();
     expect(total()).toHaveTextContent("₱0.00");
+    expect(screen.getByRole("img", { name: "Under ₱500" })).toBeInTheDocument();
     expect(expensesApi.fetchDayExpenses).toHaveBeenCalledWith(manilaDay());
     await expectNoA11yViolations(container);
   });
@@ -86,6 +87,7 @@ describe("Expenses tab", () => {
     await userEvent.type(amountBox(1), "1000");
     await userEvent.type(amountBox(2), "250");
     await waitFor(() => expect(total()).toHaveTextContent("₱1,250.00"));
+    expect(screen.getByRole("img", { name: "Over ₱1,000" })).toBeInTheDocument();
 
     expect(total().tagName).toBe("OUTPUT");
     expect(screen.queryByRole("textbox", { name: /total/i })).not.toBeInTheDocument();
@@ -103,6 +105,7 @@ describe("Expenses tab", () => {
     await userEvent.click(includeBox(2));
     expect(includeBox(2)).not.toBeChecked();
     await waitFor(() => expect(total()).toHaveTextContent("₱1,000.00"));
+    expect(screen.getByRole("img", { name: "₱500 to ₱1,000" })).toBeInTheDocument();
 
     await userEvent.click(includeBox(2));
     await waitFor(() => expect(total()).toHaveTextContent("₱1,250.00"));
@@ -199,12 +202,15 @@ describe("Records tab", () => {
     ]);
     const { container } = renderRoute("/?tab=records");
 
-    const first = await screen.findByRole("button", { name: /Thu, Oct 29, 2026 · ₱1,000\.00/ });
+    const first = await screen.findByRole("button", {
+      name: /Thu, Oct 29, 2026 · ₱1,000\.00 ₱500 to ₱1,000/,
+    });
     const panels = screen.getAllByRole("button", { expanded: false });
     expect(panels.map((p) => p.textContent)).toEqual([
-      "Thu, Oct 29, 2026 · ₱1,000.00" + "2 expenses" + "Not in total: 1 expense · ₱250.00",
-      "Wed, Oct 28, 2026 · ₱75.00" + "1 expense",
+      "Thu, Oct 29, 2026 · ₱1,000.00 " + "2 expenses" + "Not in total: 1 expense · ₱250.00",
+      "Wed, Oct 28, 2026 · ₱75.00 " + "1 expense",
     ]);
+    expect(screen.getByRole("img", { name: "Under ₱500" })).toBeInTheDocument();
     await expectNoA11yViolations(container);
 
     await userEvent.click(first);
